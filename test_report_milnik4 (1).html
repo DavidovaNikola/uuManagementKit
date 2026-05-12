@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Report — uuManagementKit | Tým 9 | 4. milník</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --panel-2: #1c232c;
+    --border: #2a3441;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --text-muted: #6e7681;
+    --accent: #f78166;
+    --accent-2: #58a6ff;
+    --pass: #3fb950;
+    --fail: #f85149;
+    --warn: #d29922;
+    --crit: #da3633;
+    --major: #db6d28;
+    --minor: #d29922;
+    --shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 12px 40px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Söhne', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: "ss01", "cv11", "tnum";
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 90% -10%, rgba(247,129,102,0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(88,166,255,0.06), transparent 60%),
+      var(--bg);
+    min-height: 100vh;
+    padding: 48px 24px 96px;
+  }
+
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .header-left .eyebrow {
+    font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .header-left h1 {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-weight: 400;
+    font-size: clamp(34px, 4.5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .header-left h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .header-left .subtitle {
+    color: var(--text-dim);
+    font-size: 16px;
+    margin-top: 14px;
+    max-width: 580px;
+  }
+  .meta-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 22px;
+    font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    min-width: 280px;
+  }
+  .meta-card .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .meta-card .row span:last-child { color: var(--text); }
+
+  /* KPI ROW */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .kpi {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+  .kpi.pass::before { background: var(--pass); }
+  .kpi.fail::before { background: var(--fail); }
+  .kpi.warn::before { background: var(--warn); }
+
+  .kpi .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .kpi .value {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 48px;
+    line-height: 1;
+    margin: 14px 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .kpi .delta {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* SECTION */
+  section { margin-bottom: 56px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 14px;
+  }
+  .section-head .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .section-head h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+  }
+
+  /* SUMMARY */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+  }
+  .prose {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .prose p { margin-bottom: 14px; color: var(--text); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--accent); font-weight: 600; }
+  .prose .verdict {
+    display: inline-block;
+    background: rgba(63,185,80,0.12);
+    border: 1px solid rgba(63,185,80,0.3);
+    color: var(--pass);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 8px;
+  }
+  .prose .verdict.warn {
+    background: rgba(210,153,34,0.12);
+    border-color: rgba(210,153,34,0.3);
+    color: var(--warn);
+  }
+
+  .highlights {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .highlight {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+  }
+  .highlight.crit { border-left-color: var(--crit); }
+  .highlight.major { border-left-color: var(--major); }
+  .highlight.info { border-left-color: var(--accent-2); }
+  .highlight .h-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .highlight .h-text { font-size: 14px; line-height: 1.5; }
+
+  /* CHARTS */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .chart-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    min-height: 340px;
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-card h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 19px;
+    margin-bottom: 4px;
+  }
+  .chart-card .chart-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+    margin-bottom: 18px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 280px;
+  }
+  .chart-wrap.tall { height: 360px; }
+
+  /* TABLE */
+  .table-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--panel-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  tr:last-child td { border-bottom: none; }
+  td { color: var(--text-dim); }
+  td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    font-size: 12px;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .pill.high  { background: rgba(218,54,51,0.15);  color: #ff7b72; }
+  .pill.mid   { background: rgba(219,109,40,0.15); color: #ffa657; }
+  .pill.low   { background: rgba(210,153,34,0.15); color: #f0c674; }
+  .pill.pass  { background: rgba(63,185,80,0.15);  color: var(--pass); }
+  .pill.fail  { background: rgba(248,81,73,0.15);  color: var(--fail); }
+
+  /* FOOTER */
+  footer {
+    margin-top: 80px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 880px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .summary-grid, .charts-grid { grid-template-columns: 1fr; }
+    body { padding: 32px 16px 64px; }
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="eyebrow">4. milník · Test Report</div>
+      <h1>Manažerské shrnutí <em>kvality</em><br>aplikace uuManagementKit</h1>
+      <p class="subtitle">Souhrn výsledků testování — testovací scénáře, defekty a doporučení k akceptaci pro fázi Sign-off.</p>
+    </div>
+    <div class="meta-card">
+      <div class="row"><span>Projekt</span><span>uuManagementKit</span></div>
+      <div class="row"><span>Tým</span><span>Tým 9</span></div>
+      <div class="row"><span>Milník</span><span>4 / Sign-off</span></div>
+      <div class="row"><span>Období</span><span>14. – 22. 4. 2026</span></div>
+      <div class="row"><span>Verze</span><span>1.0</span></div>
+    </div>
+  </header>
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="label">Testovací scénáře</div>
+      <div class="value">7</div>
+      <div class="delta">napříč 4 moduly</div>
+    </div>
+    <div class="kpi pass">
+      <div class="label">Test Cases — PASS</div>
+      <div class="value">3</div>
+      <div class="delta">42,9 % bez defektu</div>
+    </div>
+    <div class="kpi fail">
+      <div class="label">Test Cases — FAIL</div>
+      <div class="value">4</div>
+      <div class="delta">57,1 % s nálezem</div>
+    </div>
+    <div class="kpi warn">
+      <div class="label">Nalezené chyby</div>
+      <div class="value">10</div>
+      <div class="delta">3 critical · 5 major · 2 minor</div>
+    </div>
+  </div>
+
+  <!-- 1. SHRNUTÍ -->
+  <section>
+    <div class="section-head">
+      <span class="num">01</span>
+      <h2>Manažerské shrnutí</h2>
+    </div>
+    <div class="summary-grid">
+      <div class="prose">
+        <p>V rámci 4. milníku bylo provedeno <strong>7 testovacích scénářů</strong> pokrývajících klíčové funkční oblasti aplikace uuManagementKit — správu dokumentů (DOC), tvorbu a úpravu schůzek (CRT, UPD) a vytváření požadavků (REQ). Testování probíhalo v období 14.–22. 4. 2026 podle definované Test Strategy v rámci vodopádového modelu.</p>
+        <p>Výsledkem je <strong>10 nalezených defektů</strong>, z nichž 3 mají kritickou závažnost a brání plné akceptaci produktu. Nejzávažnější nálezy se týkají modulu <strong>Create Request</strong> (BE chyba 400 Bad Request, prázdná chybová hláška) a modulu <strong>Create document</strong> (možnost vytvořit dokument s pouze whitespace názvem, který následně nelze otevřít).</p>
+        <p>Modul <strong>Set document state</strong> (TC-DOC-03) prošel bez nálezu včetně zátěžového testu (5000 znaků v komentáři). Funkce <strong>Copy document</strong> a <strong>Update document</strong> jsou rovněž stabilní; u Update document byla zaznamenána pouze UX nekonzistence (dvojklik vs. kebab menu), která nebrání akceptaci.</p>
+        <p><span class="verdict warn">⚠ Doporučení: Sign-off podmíněně po opravě 3 critical bugů</span></p>
+      </div>
+
+      <div class="highlights">
+        <div class="highlight crit">
+          <div class="h-label">Blocker · TC-REQ-01</div>
+          <div class="h-text">Backend chyba <code>400 Bad Request / artifactLoadFailed</code> — request nelze vytvořit. Nutná oprava před release.</div>
+        </div>
+        <div class="highlight crit">
+          <div class="h-label">Blocker · TC-DOC-01</div>
+          <div class="h-text">Dokument lze vytvořit s názvem o samé mezery; následně jej nelze otevřít. Vstupní validace chybí.</div>
+        </div>
+        <div class="highlight crit">
+          <div class="h-label">Blocker · TC-UPD-02</div>
+          <div class="h-text">Datum ukončení může být dřívější než datum zahájení — chybí business validace, dochází k tichému přepisu dat.</div>
+        </div>
+        <div class="highlight major">
+          <div class="h-label">UX · 4× Major</div>
+          <div class="h-text">Nespecifické / prázdné chybové hlášky napříč moduly — uživatel nedostává srozumitelnou zpětnou vazbu.</div>
+        </div>
+        <div class="highlight info">
+          <div class="h-label">Pozitivum</div>
+          <div class="h-text">Modul Set document state (6 sub-scénářů včetně zátěžového) — všechny PASS bez výhrad.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. GRAFY -->
+  <section>
+    <div class="section-head">
+      <span class="num">02</span>
+      <h2>Vizualizace výsledků</h2>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Test Cases podle statusu</h3>
+        <div class="chart-sub">PASS / FAIL · n = 7</div>
+        <div class="chart-wrap"><canvas id="chartTcStatus"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Defekty podle závažnosti</h3>
+        <div class="chart-sub">A Critical / B Major / C Minor · n = 10</div>
+        <div class="chart-wrap"><canvas id="chartSeverity"></canvas></div>
+      </div>
+
+      <div class="chart-card full">
+        <h3>Pokrytí Test Cases defekty</h3>
+        <div class="chart-sub">Počet nalezených chyb na test case</div>
+        <div class="chart-wrap"><canvas id="chartCoverage"></canvas></div>
+      </div>
+
+      <div class="chart-card full">
+        <h3>Timeline nálezů chyb</h3>
+        <div class="chart-sub">Kumulativní výskyt + závažnost · 14. – 22. 4. 2026</div>
+        <div class="chart-wrap tall"><canvas id="chartTimeline"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TABULKA TC -->
+  <section>
+    <div class="section-head">
+      <span class="num">03</span>
+      <h2>Přehled testovacích scénářů</h2>
+    </div>
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Název</th><th>Modul</th><th>Status</th><th>Nálezy</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>TC-DOC-01</td><td>Create document</td><td>Document</td><td><span class="pill fail">FAIL</span></td><td>3</td></tr>
+          <tr><td>TC-DOC-02</td><td>Update document</td><td>Document</td><td><span class="pill pass">PASS</span></td><td>0 (UX hint)</td></tr>
+          <tr><td>TC-DOC-03</td><td>Set document state</td><td>Document</td><td><span class="pill pass">PASS</span></td><td>0</td></tr>
+          <tr><td>TC-DOC-03</td><td>Copy document</td><td>Document</td><td><span class="pill pass">PASS</span></td><td>0</td></tr>
+          <tr><td>TC-REQ-01</td><td>Create Request</td><td>Request</td><td><span class="pill fail">FAIL</span></td><td>2</td></tr>
+          <tr><td>TC-CRT-01</td><td>Create meeting</td><td>Meeting</td><td><span class="pill fail">FAIL</span></td><td>3</td></tr>
+          <tr><td>TC-UPD-02</td><td>Update meeting</td><td>Meeting</td><td><span class="pill fail">FAIL</span></td><td>2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. DOPORUČENÍ -->
+  <section>
+    <div class="section-head">
+      <span class="num">04</span>
+      <h2>Doporučení k akceptaci</h2>
+    </div>
+    <div class="prose">
+      <p><strong>1. Před Sign-off opravit Critical (A) chyby:</strong> 3 nálezy v modulech Create Request, Create document a Update meeting blokují plnou akceptaci dle kritéria definovaného v Test Strategy (Fáze 4: „Všechny chyby s prioritou Vysoká a Kritická jsou vyřešeny a ověřeny").</p>
+      <p><strong>2. Major (B) chyby — UX hlášky:</strong> 5 nálezů týkajících se nesrozumitelných nebo prázdných validačních hlášek doporučujeme zařadit do nejbližšího patche po Sign-off. Nepředstavují funkční blocker, ale degradují uživatelský zážitek.</p>
+      <p><strong>3. Minor (C) chyby:</strong> 2 nálezy nízké závažnosti lze řešit v rámci běžné údržby.</p>
+      <p><strong>4. Re-testing scope:</strong> po opravách doporučujeme regresní průchod TC-DOC-01, TC-REQ-01, TC-UPD-02 a smoke check zbývajících scénářů. Odhadovaná pracnost: ~2 hodiny QA.</p>
+      <p><strong>5. Návrh na rozšíření test setu:</strong> doplnit explicitní edge-case scénáře pro vstupní validaci textových polí (whitespace, neviditelné znaky, prázdné hodnoty) napříč všemi formuláři aplikace.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>uuManagementKit · Test Report · Tým 9</span>
+    <span>Generated 28. 4. 2026 · Milestone 4</span>
+  </footer>
+
+</div>
+
+<script>
+// Globální Chart.js styling
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#2a3441';
+Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+Chart.defaults.font.size = 12;
+
+const palette = {
+  pass: '#3fb950',
+  fail: '#f85149',
+  crit: '#da3633',
+  major: '#db6d28',
+  minor: '#d29922',
+  accent: '#f78166',
+  blue: '#58a6ff',
+  panel: '#161b22',
+  border: '#2a3441'
+};
+
+// 1. TC Status — donut
+new Chart(document.getElementById('chartTcStatus'), {
+  type: 'doughnut',
+  data: {
+    labels: ['PASS', 'FAIL'],
+    datasets: [{
+      data: [3, 4],
+      backgroundColor: [palette.pass, palette.fail],
+      borderColor: palette.panel,
+      borderWidth: 3,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '62%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { padding: 18, usePointStyle: true, pointStyle: 'circle', boxWidth: 8 }
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => ` ${ctx.label}: ${ctx.parsed} TC (${(ctx.parsed/7*100).toFixed(1)}%)`
+        }
+      }
+    }
+  }
+});
+
+// 2. Severity — bar horizontal
+new Chart(document.getElementById('chartSeverity'), {
+  type: 'bar',
+  data: {
+    labels: ['A — Critical', 'B — Major', 'C — Minor'],
+    datasets: [{
+      data: [3, 5, 2],
+      backgroundColor: [palette.crit, palette.major, palette.minor],
+      borderRadius: 4,
+      barThickness: 36
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: { label: (ctx) => ` ${ctx.parsed.x} chyb` }
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: { stepSize: 1, precision: 0 },
+        grid: { color: palette.border }
+      },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// 3. Coverage — bar vertical (chyby per TC)
+new Chart(document.getElementById('chartCoverage'), {
+  type: 'bar',
+  data: {
+    labels: [
+      'TC-DOC-01\nCreate document',
+      'TC-DOC-02\nUpdate document',
+      'TC-DOC-03\nSet state',
+      'TC-DOC-03\nCopy document',
+      'TC-REQ-01\nCreate Request',
+      'TC-CRT-01\nCreate meeting',
+      'TC-UPD-02\nUpdate meeting'
+    ],
+    datasets: [{
+      label: 'Critical (A)',
+      data: [1, 0, 0, 0, 1, 1, 1],
+      backgroundColor: palette.crit,
+      borderRadius: 3,
+      stack: 'a'
+    }, {
+      label: 'Major (B)',
+      data: [2, 0, 0, 0, 1, 1, 1],
+      backgroundColor: palette.major,
+      borderRadius: 3,
+      stack: 'a'
+    }, {
+      label: 'Minor (C)',
+      data: [0, 0, 0, 0, 0, 1, 0],
+      backgroundColor: palette.minor,
+      borderRadius: 3,
+      stack: 'a'
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 18, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 12 } }
+    },
+    scales: {
+      x: {
+        stacked: true,
+        ticks: {
+          callback: function(val) {
+            const label = this.getLabelForValue(val);
+            return label.split('\n');
+          },
+          font: { size: 11 }
+        },
+        grid: { display: false }
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        ticks: { stepSize: 1, precision: 0 },
+        grid: { color: palette.border }
+      }
+    }
+  }
+});
+
+// 4. Timeline — kumulativní křivka + bubliny
+const dates = ['14.4.', '15.4.', '16.4.', '17.4.', '18.4.', '19.4.', '20.4.', '21.4.', '22.4.'];
+//        14.4: 2 (REQ crit + REQ major)
+//        15.4: 1 (CRT crit) -> kumul 3
+//        16.4: 1 (DOC major) -> 4
+//        17.4: 1 (DOC crit)  -> 5
+//        18.4: 1 (UPD major) -> 6
+//        19.4: 1 (DOC major) -> 7
+//        20.4: 1 (UPD crit)  -> 8
+//        21.4: 1 (CRT major) -> 9
+//        22.4: 1 (CRT minor) -> 10
+const cumulative = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+const daily =      [2, 1, 1, 1, 1, 1, 1, 1, 1];
+
+new Chart(document.getElementById('chartTimeline'), {
+  type: 'line',
+  data: {
+    labels: dates,
+    datasets: [
+      {
+        label: 'Kumulativní počet chyb',
+        data: cumulative,
+        borderColor: palette.accent,
+        backgroundColor: 'rgba(247,129,102,0.12)',
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: palette.accent,
+        pointBorderColor: palette.panel,
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Nově nalezené (denně)',
+        type: 'bar',
+        data: daily,
+        backgroundColor: 'rgba(88,166,255,0.5)',
+        borderRadius: 3,
+        barThickness: 18,
+        yAxisID: 'y1'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 18, usePointStyle: true, boxWidth: 10 } }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: {
+        beginAtZero: true,
+        position: 'left',
+        title: { display: true, text: 'Kumulativně', color: palette.accent, font: { size: 11 } },
+        ticks: { stepSize: 2 },
+        grid: { color: palette.border }
+      },
+      y1: {
+        beginAtZero: true,
+        position: 'right',
+        max: 5,
+        title: { display: true, text: 'Denní nálezy', color: palette.blue, font: { size: 11 } },
+        ticks: { stepSize: 1, precision: 0 },
+        grid: { display: false }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
